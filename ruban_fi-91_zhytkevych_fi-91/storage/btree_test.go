@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
+	"os"
 	"testing"
 )
 
@@ -18,68 +19,68 @@ func encode(t *testing.T, i interface{}) bytes.Buffer {
 }
 
 func TestSheetAddElement(t *testing.T) {
-	t.Run("empty sheet encode", func(t *testing.T) {
-		sh := NewSheet()
-		bts := sh.Encode()
-		encoded := encode(t, &Sheet{
-			Keys: make([]*SheetElement, 0),
-		})
-		if bytes.Compare(bts.Bytes(), encoded.Bytes()) != 0 {
-			t.Errorf("Encoded data does not match\n")
-		}
-	})
+	// t.Run("empty sheet encode", func(t *testing.T) {
+	// 	sh := NewSheet()
+	// 	bts := sh.Encode()
+	// 	encoded := encode(t, &Sheet{
+	// 		Keys: make([]*SheetElement, 0),
+	// 	})
+	// 	if bytes.Compare(bts.Bytes(), encoded.Bytes()) != 0 {
+	// 		t.Errorf("Encoded data does not match\n")
+	// 	}
+	// })
 
-	t.Run("sheet add elements", func(t *testing.T) {
-		sheet := NewSheet()
-		sheet.Add("vanya", nil)
-		sheet.Add("go", nil)
-		sheet.Add("dota", nil)
-		appendToSheet(sheet, &SheetElement{
-			Key:  "chert",
-			Data: nil,
-		})
-		appendToSheet(sheet, &SheetElement{
-			Key:  "katat",
-			Data: nil,
-		})
+	// t.Run("sheet add elements", func(t *testing.T) {
+	// 	sheet := NewSheet()
+	// 	sheet.Add("vanya", nil)
+	// 	sheet.Add("go", nil)
+	// 	sheet.Add("dota", nil)
+	// 	appendToSheet(sheet, &SheetElement{
+	// 		Key:  "chert",
+	// 		Data: nil,
+	// 	})
+	// 	appendToSheet(sheet, &SheetElement{
+	// 		Key:  "katat",
+	// 		Data: nil,
+	// 	})
 
-		err := appendToSheet(sheet, &SheetElement{
-			Key:  "posle",
-			Data: nil,
-		})
+	// 	err := appendToSheet(sheet, &SheetElement{
+	// 		Key:  "posle",
+	// 		Data: nil,
+	// 	})
 
-		err = appendToSheet(sheet.Children[1], &SheetElement{
-			Key:  "luche",
-			Data: nil,
-		})
+	// 	err = appendToSheet(sheet.Children[1], &SheetElement{
+	// 		Key:  "luche",
+	// 		Data: nil,
+	// 	})
 
-		err = appendToSheet(sheet.Children[1], &SheetElement{
-			Key:  "spat",
-			Data: nil,
-		})
+	// 	err = appendToSheet(sheet.Children[1], &SheetElement{
+	// 		Key:  "spat",
+	// 		Data: nil,
+	// 	})
 
-		err = appendToSheet(sheet.Children[1], &SheetElement{
-			Key:  "poyti",
-			Data: nil,
-		})
-		if err != nil {
-			panic(err)
-		}
-	})
+	// 	err = appendToSheet(sheet.Children[1], &SheetElement{
+	// 		Key:  "poyti",
+	// 		Data: nil,
+	// 	})
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// })
 
-	t.Run("split sheets by two on half", func(t *testing.T) {
-		sheet := NewSheet()
-		sheet.Add("ya", nil)
-		sheet.Add("hochu", nil)
-		sheet.Add("pivo", nil)
-		sheet.Add("vodku", nil)
-		sheet.Add("mb", nil)
-		left, right, elem := splitSheetsByHalf(sheet)
-		log.Println(left, right, elem.Key)
-	})
+	// t.Run("split sheets by two on half", func(t *testing.T) {
+	// 	sheet := NewSheet()
+	// 	sheet.Add("ya", nil)
+	// 	sheet.Add("hochu", nil)
+	// 	sheet.Add("pivo", nil)
+	// 	sheet.Add("vodku", nil)
+	// 	sheet.Add("mb", nil)
+	// 	left, right, elem := splitSheetsByHalf(sheet)
+	// 	log.Println(left, right, elem.Key)
+	// })
 
 	t.Run("Test tree adding elements and find", func(t *testing.T) {
-		btree := NewBtree()
+		btree := NewBtree("./btree-storage/")
 		btree.AddWord("a", nil)
 		btree.AddWord("b", nil)
 		btree.AddWord("c", nil)
@@ -111,11 +112,12 @@ func TestSheetAddElement(t *testing.T) {
 		btree.AddWord("zd", nil)
 		btree.AddWord("ze", nil)
 		btree.AddWord("bc", nil)
-		//log.Println(btree)
+		log.Println(btree)
+		os.RemoveAll("/btree-root/")
 	})
 
 	t.Run("Test element finding", func(t *testing.T) {
-		btree := NewBtree()
+		btree := NewBtree("./btree-storage")
 		m_a := make(map[DocId][]PosIdx)
 		m_e := make(map[DocId][]PosIdx)
 		m_g := make(map[DocId][]PosIdx)
@@ -142,6 +144,7 @@ func TestSheetAddElement(t *testing.T) {
 		log.Println(btree.Find("g"))
 		log.Println(btree.Find("l"))
 		log.Println(btree.Find("h"))
+		os.RemoveAll("/btree-root/")
 	})
 
 }

@@ -4,14 +4,19 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
+	"path"
 	"strings"
 )
 
-const t = 3
+const t = 20
 
 type DocId int
 type PosIdx int
+type FilePath string
 
 type SheetElement struct {
 	Key  string
@@ -19,49 +24,79 @@ type SheetElement struct {
 }
 
 type Sheet struct {
+	Name     FilePath
 	Keys     []*SheetElement
-	Children []*Sheet
+	Children []FilePath
 	Parent   *Sheet
 }
 
-func NewSheet() *Sheet {
+func NewSheet(folder string) *Sheet {
 	keys := make([]*SheetElement, 0, 2*t-1)
+	files, err := ioutil.ReadDir(folder)
+	if err != nil {
+		log.Println(err)
+	}
+	name := fmt.Sprintf("%d", len(files))
 	return &Sheet{
+		Name:     FilePath(name),
 		Keys:     keys,
 		Children: nil,
 		Parent:   nil,
 	}
 }
 
-// func (s *Sheet) String() string {
-// 	return fmt.Sprintf("%v", s.Keys)
-// }
-
-func (s *Sheet) Encode() bytes.Buffer {
+func serialize(s *Sheet) (bytes.Buffer, error) {
 	var buf bytes.Buffer
 	encoder := gob.NewEncoder(&buf)
 	err := encoder.Encode(s)
 	if err != nil {
+		return buf, err
+	}
+	return buf, nil
+}
+
+func deserialize(file *os.File, sheet *Sheet) (*Sheet, error) {
+	decoder := gob.NewDecoder(file)
+	err := decoder.Decode(sheet)
+	if err != nil {
+		return nil, err
+	}
+	return sheet, nil
+}
+
+func ReadSheet(filePath FilePath, folder string) (*Sheet, error) {
+	file, err := os.Open(path.Join(folder, string(filePath)+".gob"))
+	if err != nil {
+		return nil, err
+	}
+	sheet := NewSheet(folder)
+	sheet, err = deserialize(file, sheet)
+	if err != nil {
+		return nil, err
+	}
+	return sheet, nil
+}
+
+func WriteSheet(sheet *Sheet, folder string) {
+	sheet.Parent = nil
+	buffer, err := serialize(sheet)
+	err = os.WriteFile(path.Join(folder, string(sheet.Name)+".gob"), buffer.Bytes(), 0700)
+	if err != nil {
 		log.Println(err)
 	}
-
-	return buf
 }
 
 func (s *Sheet) AddChild(sheet *Sheet, pos int) error {
 	s.Children = append(
 		s.Children[:pos],
-		sheet,
+		sheet.Name,
 	)
 	s.Children = append(s.Children, s.Children[pos:len(s.Children)-1]...)
 	return nil
 }
 
-func (s *Sheet) AppendChildren(children []*Sheet) {
+func (s *Sheet) AppendChildren(children []FilePath) {
 	s.Children = children
-	for _, ch := range children {
-		ch.Parent = s
-	}
 }
 
 func (s *Sheet) Find(key string) (*SheetElement, int, error) {
@@ -84,13 +119,6 @@ func (s *Sheet) Add(key string, data map[DocId][]PosIdx) error {
 		return errors.New("Sheet full")
 	}
 	for i, v := range s.Keys {
-		// if v == nil {
-		// 	s.Keys[i] = &SheetElement{
-		// 		Key:  key,
-		// 		Data: data,
-		// 	}
-		// 	break
-		// }
 		cmp := strings.Compare(v.Key, key)
 		switch cmp {
 		// update data -- merge two maps
