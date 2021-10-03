@@ -14,8 +14,6 @@ import (
 
 const t = 20
 
-// type DocId int
-// type PosIdx int
 type FilePath string
 
 type SheetElement struct {

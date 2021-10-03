@@ -3,7 +3,6 @@ package indexer
 import (
 	"log"
 	"regexp"
-	"strings"
 
 	"github.com/aipyth/aaf-labs-2021/ruban_fi-91_zhytkevych_fi-91/storage"
 )
@@ -33,9 +32,10 @@ func regexSplit(str string, reg string) []string {
 func makeInvertedIndexes(words []string, docId int) map[string]map[int][]int {
 	m := make(map[string]map[int][]int)
 	for i, w := range words {
-		w = strings.ToLower(w)
-		if len(m[w]) == 0 {
-			m[w] = map[int][]int{docId: []int{i}}
+		log.Println(m[w])
+		if m[w] == nil {
+			val := make(map[int][]int)
+			val[docId] = []int{i}
 			continue
 		}
 		m[w][docId] = append(m[w][docId], int(i))
@@ -49,7 +49,6 @@ func (i *IndexerBtree) IndexDocument(docId int, document []byte) {
 }
 
 func (i *IndexerBtree) GetDocsByKeyword(word string) map[int][]int {
-	word = strings.ToLower(word)
 	sheetEl, err := i.btree.Find(word)
 	if err != nil {
 		log.Println(err)

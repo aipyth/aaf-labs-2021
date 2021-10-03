@@ -3,8 +3,10 @@ package storage
 import (
 	"bytes"
 	"encoding/gob"
+	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -61,7 +63,7 @@ func TestSheetAddElement(t *testing.T) {
 
 	// 	err = appendToSheet(sheet.Children[1], &SheetElement{
 	// 		Key:  "poyti",
-	// 		Data: nil,
+	// 		Data: nil
 	// 	})
 	// 	if err != nil {
 	// 		panic(err)
@@ -81,70 +83,76 @@ func TestSheetAddElement(t *testing.T) {
 
 	t.Run("Test tree adding elements and find", func(t *testing.T) {
 		btree := NewBtree("./btree-storage/")
-		btree.AddWord("a", nil)
-		btree.AddWord("b", nil)
-		btree.AddWord("c", nil)
-		btree.AddWord("d", nil)
-		btree.AddWord("e", nil)
-		btree.AddWord("f", nil)
-		btree.AddWord("g", nil)
-		btree.AddWord("h", nil)
-		btree.AddWord("i", nil)
-		btree.AddWord("j", nil)
-		btree.AddWord("k", nil)
-		btree.AddWord("l", nil)
-		btree.AddWord("n", nil)
-		btree.AddWord("m", nil)
-		btree.AddWord("o", nil)
-		btree.AddWord("p", nil)
-		btree.AddWord("q", nil)
-		btree.AddWord("r", nil)
-		btree.AddWord("s", nil)
-		btree.AddWord("t", nil)
-		btree.AddWord("u", nil)
-		btree.AddWord("v", nil)
-		btree.AddWord("w", nil)
-		btree.AddWord("x", nil)
-		btree.AddWord("y", nil)
-		btree.AddWord("z", nil)
-		btree.AddWord("za", nil)
-		btree.AddWord("zc", nil)
-		btree.AddWord("zd", nil)
-		btree.AddWord("ze", nil)
-		btree.AddWord("bc", nil)
+		btree.AddIndex("a", nil)
+		btree.AddIndex("b", nil)
+		btree.AddIndex("c", nil)
+		btree.AddIndex("d", nil)
+		btree.AddIndex("e", nil)
+		btree.AddIndex("f", nil)
+		btree.AddIndex("g", nil)
+		btree.AddIndex("h", nil)
+		btree.AddIndex("i", nil)
+		btree.AddIndex("j", nil)
+		btree.AddIndex("k", nil)
+		btree.AddIndex("l", nil)
+		btree.AddIndex("n", nil)
+		btree.AddIndex("m", nil)
+		btree.AddIndex("o", nil)
+		btree.AddIndex("p", nil)
+		btree.AddIndex("q", nil)
+		btree.AddIndex("r", nil)
+		btree.AddIndex("s", nil)
+		btree.AddIndex("t", nil)
+		btree.AddIndex("u", nil)
+		btree.AddIndex("v", nil)
+		btree.AddIndex("w", nil)
+		btree.AddIndex("x", nil)
+		btree.AddIndex("y", nil)
+		btree.AddIndex("z", nil)
+		btree.AddIndex("za", nil)
+		btree.AddIndex("zc", nil)
+		btree.AddIndex("zd", nil)
+		btree.AddIndex("ze", nil)
+		btree.AddIndex("bc", nil)
 		log.Println(btree)
-		os.RemoveAll("/btree-root/")
+		dir, _ := ioutil.ReadDir("./btree-storage")
+		for _, file := range dir {
+			os.Remove(path.Join("./btree-storage", file.Name()))
+		}
 	})
 
 	t.Run("Test element finding", func(t *testing.T) {
 		btree := NewBtree("./btree-storage")
-		m_a := make(map[DocId][]PosIdx)
-		m_e := make(map[DocId][]PosIdx)
-		m_g := make(map[DocId][]PosIdx)
-		m_l := make(map[DocId][]PosIdx)
-		m_a[1] = []PosIdx{0, 1}
-		m_e[1] = []PosIdx{0, 1}
-		m_g[1] = []PosIdx{0, 1}
-		m_l[1] = []PosIdx{0, 1}
-		btree.AddWord("a", m_a)
-		btree.AddWord("b", nil)
-		btree.AddWord("c", nil)
-		btree.AddWord("d", nil)
-		btree.AddWord("e", m_e)
-		btree.AddWord("f", nil)
-		btree.AddWord("g", m_g)
-		btree.AddWord("h", nil)
-		btree.AddWord("i", nil)
-		btree.AddWord("j", nil)
-		btree.AddWord("k", nil)
-		btree.AddWord("l", m_l)
+		m_a := make(map[int][]int)
+		m_e := make(map[int][]int)
+		m_g := make(map[int][]int)
+		m_l := make(map[int][]int)
+		m_a[1] = []int{0, 1}
+		m_e[1] = []int{0, 1}
+		m_g[1] = []int{0, 1}
+		m_l[1] = []int{0, 1}
+		btree.AddIndex("a", m_a)
+		btree.AddIndex("b", nil)
+		btree.AddIndex("c", nil)
+		btree.AddIndex("d", nil)
+		btree.AddIndex("e", m_e)
+		btree.AddIndex("f", nil)
+		btree.AddIndex("g", m_g)
+		btree.AddIndex("h", nil)
+		btree.AddIndex("i", nil)
+		btree.AddIndex("j", nil)
+		btree.AddIndex("k", nil)
+		btree.AddIndex("l", m_l)
 		log.Println(btree)
 		log.Println(btree.Find("a"))
 		log.Println(btree.Find("e"))
 		log.Println(btree.Find("g"))
 		log.Println(btree.Find("l"))
 		log.Println(btree.Find("h"))
-		os.RemoveAll("/btree-root/")
+		dir, _ := ioutil.ReadDir("./btree-storage")
+		for _, file := range dir {
+			os.Remove(path.Join("./btree-storage", file.Name()))
+		}
 	})
 
 }
