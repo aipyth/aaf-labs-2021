@@ -14,13 +14,13 @@ import (
 
 const t = 20
 
-type DocId int
-type PosIdx int
+// type DocId int
+// type PosIdx int
 type FilePath string
 
 type SheetElement struct {
 	Key  string
-	Data map[DocId][]PosIdx
+	Data map[int][]int
 }
 
 type Sheet struct {
@@ -114,7 +114,7 @@ func (s *Sheet) Find(key string) (*SheetElement, int, error) {
 	return nil, len(s.Keys), errors.New("Not found")
 }
 
-func (s *Sheet) Add(key string, data map[DocId][]PosIdx) error {
+func (s *Sheet) Add(key string, data map[int][]int) error {
 	if len(s.Keys) == cap(s.Keys) {
 		return errors.New("Sheet full")
 	}
