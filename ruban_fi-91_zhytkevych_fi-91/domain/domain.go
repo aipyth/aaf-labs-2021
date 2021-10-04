@@ -16,6 +16,8 @@ const domainConfigName = "dddb-conf.json"
 var defaultDomainConf = &DomainConf{
 	StoragePath: "./",
 	StorageType: "fs",
+    IndexerPath: "./",
+    IndexerType: "fs",
 }
 
 type Domain struct {
