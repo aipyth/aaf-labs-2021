@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 )
 
@@ -103,6 +104,23 @@ func (s *Sheet) Find(key string) (*SheetElement, int, error) {
 		switch cmp {
 		case 0:
 			return v, i, nil
+		case 1:
+			return nil, i, errors.New("Not found")
+		case -1:
+			continue
+		}
+	}
+	return nil, len(s.Keys), errors.New("Not found")
+}
+
+func (s *Sheet) Match(pattern string) (*SheetElement, int, error) {
+	for i, v := range s.Keys {
+		cmp := strings.Compare(v.Key, pattern)
+		match, _ := regexp.MatchString(pattern, v.Key)
+		if match {
+			return v, i, nil
+		}
+		switch cmp {
 		case 1:
 			return nil, i, errors.New("Not found")
 		case -1:

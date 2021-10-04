@@ -113,6 +113,20 @@ func (t *Btree) Find(word string) (*SheetElement, error) {
 	}
 }
 
+func (t *Btree) FindByPrefix(pattern string) (*SheetElement, error) {
+	currSheet := t.root
+	for {
+		el, childIndex, err := currSheet.Match(pattern)
+		if err != nil && currSheet.Children != nil {
+			currSheet, err = ReadSheet(currSheet.Children[childIndex], t.path)
+			if err != nil {
+				log.Println(err)
+			}
+			continue
+		}
+		return el, err
+	}
+}
 func (t *Btree) AddIndex(word string, data map[uint64][]int) error {
 	currSheet := t.root
 	index := 0

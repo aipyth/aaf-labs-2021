@@ -114,6 +114,7 @@ func TestSheetAddElement(t *testing.T) {
 		btree.AddIndex("zd", nil)
 		btree.AddIndex("ze", nil)
 		btree.AddIndex("bc", nil)
+		btree.AddIndex("obladi", nil)
 		log.Println(btree)
 		dir, _ := ioutil.ReadDir("./btree-storage")
 		for _, file := range dir {
@@ -123,10 +124,10 @@ func TestSheetAddElement(t *testing.T) {
 
 	t.Run("Test element finding", func(t *testing.T) {
 		btree := NewBtree("./btree-storage")
-		m_a := make(map[int][]int)
-		m_e := make(map[int][]int)
-		m_g := make(map[int][]int)
-		m_l := make(map[int][]int)
+		m_a := make(map[uint64][]int)
+		m_e := make(map[uint64][]int)
+		m_g := make(map[uint64][]int)
+		m_l := make(map[uint64][]int)
 		m_a[1] = []int{0, 1}
 		m_e[1] = []int{0, 1}
 		m_g[1] = []int{0, 1}
@@ -143,12 +144,14 @@ func TestSheetAddElement(t *testing.T) {
 		btree.AddIndex("j", nil)
 		btree.AddIndex("k", nil)
 		btree.AddIndex("l", m_l)
+		btree.AddIndex("obladi", m_l)
 		log.Println(btree)
 		log.Println(btree.Find("a"))
 		log.Println(btree.Find("e"))
 		log.Println(btree.Find("g"))
 		log.Println(btree.Find("l"))
 		log.Println(btree.Find("h"))
+		log.Println(btree.FindByPrefix("ob"))
 		dir, _ := ioutil.ReadDir("./btree-storage")
 		for _, file := range dir {
 			os.Remove(path.Join("./btree-storage", file.Name()))
