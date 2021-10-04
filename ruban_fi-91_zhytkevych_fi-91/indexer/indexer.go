@@ -3,13 +3,14 @@ package indexer
 import (
 	"log"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/aipyth/aaf-labs-2021/ruban_fi-91_zhytkevych_fi-91/storage"
 )
 
 type Indexer interface {
-	IndexDocument(collId int, document []byte)
+	IndexDocument(docId int, document []byte)
 	GetDocsByKeyword(word string) map[int][]int
 	GetDocsByPrefix(word string) map[int][]int
 	GetDocsByKeywords(word1 string, word2 string, dist int) map[int][]int
@@ -26,8 +27,8 @@ func NewIndexer(storagePath string) *IndexerBtree {
 	}
 }
 
-func regexSplit(str string, reg string) []string {
-	return regexp.MustCompile(reg).Split(str, -1)
+func regexSubstrings(str string, reg string) []string {
+	return regexp.MustCompile(reg).FindAllString(str, -1)
 }
 
 func makeInvertedIndexes(words []string, docId int) map[string]map[int][]int {
@@ -44,15 +45,46 @@ func makeInvertedIndexes(words []string, docId int) map[string]map[int][]int {
 }
 
 func (i *IndexerBtree) IndexDocument(docId int, document []byte) {
-	words := regexSplit(string(document), `[^a-zA-Z0-9_+]`)
+	words := regexSubstrings(string(document), `[a-zA-Z0-9_]+`)
 	i.btree.AddIndexes(makeInvertedIndexes(words, docId))
 }
 
-func (i *IndexerBtree) GetDocsByKeyword(word string) map[int][]int {
+func mapKeys(m map[int][]int) []int {
+	keys := make([]int, len(m))
+	i := 0
+	for k := range m {
+		keys[i] = k
+		i++
+	}
+	return keys
+}
+
+func (i *IndexerBtree) GetDocsByKeyword(word string) ([]int, error) {
 	word = strings.ToLower(word)
 	sheetEl, err := i.btree.Find(word)
+	log.Println(sheetEl.Data)
 	if err != nil {
-		log.Println(err)
+		return []int{}, err
 	}
-	return sheetEl.Data
+	return mapKeys(sheetEl.Data), nil
+}
+
+func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) ([]int, error) {
+	e1, err := i.btree.Find(word1)
+	e2, err := i.btree.Find(word2)
+	var docIds []int
+	if err != nil {
+		return docIds, err
+	}
+	for id, positions := range e1.Data {
+		for _, pos := range positions {
+			k := sort.Search(len(e2.Data[id]), func(j int) bool { return e2.Data[id][j] == pos+1+int(dist) })
+			log.Println("k", k, pos+1+int(dist), e2.Data[id])
+			if k < len(e2.Data[id]) && e2.Data[id][k] == pos+1+int(dist) {
+				docIds = append(docIds, id)
+				break
+			}
+		}
+	}
+	return docIds, nil
 }
