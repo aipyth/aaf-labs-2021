@@ -87,5 +87,10 @@ func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) 
 }
 
 func (i *IndexerBtree) GetDocsByPrefix(prefix string) ([]uint64, error) {
-	return []uint64{}, nil
+	prefix = strings.ToLower(prefix)
+	shEl, err := i.btree.FindByPrefix(prefix)
+	if err != nil {
+		return []uint64{}, err
+	}
+	return mapKeys(shEl.Data), nil
 }

@@ -48,6 +48,12 @@ func TestIndexerIndexDoc(t *testing.T) {
 		indexer := NewIndexerBtree("../storage/btree-storage")
 		indexes, _ := indexer.GetDocsByKeywords("ipsum", "elit", 5)
 		log.Println(indexes)
+	})
+
+	t.Run("Test finding elements by prefix", func(t *testing.T) {
+		indexer := NewIndexerBtree("../storage/btree-storage")
+		indexes, _ := indexer.GetDocsByPrefix("pariat")
+		log.Println(indexes)
 		dir, _ := ioutil.ReadDir("../storage/btree-storage")
 		for _, file := range dir {
 			os.Remove(path.Join("../storage/btree-storage", file.Name()))
