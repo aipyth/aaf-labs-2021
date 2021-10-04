@@ -69,4 +69,92 @@ func TestDomain(t *testing.T) {
         }
     })
 
+    t.Run("searches document by keyword", func(t *testing.T) {
+        domain := NewDomain()
+        const newCollectionName = "denis na pidzhake"
+        err := domain.CreateCollection(newCollectionName)
+        if err != nil {
+            t.Fatal(err)
+        }
+
+        err = domain.InsertDocument(newCollectionName, "pidzhak na denise")
+        if err != nil {
+            t.Fatal(err)
+        }
+        err = domain.InsertDocument(newCollectionName, "denis voryet pidzhak")
+        if err != nil {
+            t.Fatal(err)
+        }
+
+        searchRes := domain.Search(SearchQuery{
+            Keyword: "pidzhak",
+        })
+        
+        if len(searchRes) < 2 {
+            t.Fatal("result length is less than expected")
+        }
+        if searchRes[0].Collection.Name != newCollectionName {
+            t.Error("collection name does not match")
+        }
+    })
+
+    t.Run("searches document by prefix", func(t *testing.T) {
+        domain := NewDomain()
+        const newCollectionName = "denis na pidzhake"
+        err := domain.CreateCollection(newCollectionName)
+        if err != nil {
+            t.Fatal(err)
+        }
+
+        err = domain.InsertDocument(newCollectionName, "pidzhak na denise")
+        if err != nil {
+            t.Fatal(err)
+        }
+        err = domain.InsertDocument(newCollectionName, "denis voryet pidzhak")
+        if err != nil {
+            t.Fatal(err)
+        }
+
+        searchRes := domain.Search(SearchQuery{
+            Prefix: "pidzh",
+        })
+        
+        if len(searchRes) < 2 {
+            t.Fatal("result length is less than expected")
+        }
+        if searchRes[0].Collection.Name != newCollectionName {
+            t.Error("collection name does not match")
+        }       
+    })
+
+    t.Run("searches document by <keyword1> <n> <keyword2>", func(t *testing.T) {
+        domain := NewDomain()
+        const newCollectionName = "denis na pidzhake"
+        err := domain.CreateCollection(newCollectionName)
+        if err != nil {
+            t.Fatal(err)
+        }
+
+        err = domain.InsertDocument(newCollectionName, "pidzhak na denise")
+        if err != nil {
+            t.Fatal(err)
+        }
+        err = domain.InsertDocument(newCollectionName, "denis voryet pidzhak")
+        if err != nil {
+            t.Fatal(err)
+        }
+
+        searchRes := domain.Search(SearchQuery{
+            Keyword: "denis",
+            KeywordE: "pidzhak",
+            N: 1,
+        })
+        
+        if len(searchRes) < 1 {
+            t.Fatal("result length is less than expected")
+        }
+        if searchRes[0].Collection.Name != newCollectionName {
+            t.Error("collection name does not match")
+        }  
+    })
 }

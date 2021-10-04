@@ -14,7 +14,7 @@ const collectionsFileName = "collections.gob"
 // CollectionStorage inteface describes needed methods of different collections storages
 // implementations. This is essential for Domain.
 type CollectionStorage interface {
-    AddDocument(collection string, content []byte) (*Document, error)
+    AddDocument(collectionName string, content []byte) (*Document, error)
     CreateCollection(name string) error
     GetDocumentById(id uint64) (*Document, error)
     ContainsCollection(name string) bool

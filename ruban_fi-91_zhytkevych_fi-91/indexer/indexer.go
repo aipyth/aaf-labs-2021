@@ -10,7 +10,7 @@ import (
 )
 
 type Indexer interface {
-	IndexDocument(docId int, document []byte)
+	IndexDocument(collId int, document []byte) error
 	GetDocsByKeyword(word string) map[int][]int
 	GetDocsByPrefix(word string) map[int][]int
 	GetDocsByKeywords(word1 string, word2 string, dist int) map[int][]int
@@ -20,7 +20,7 @@ type IndexerBtree struct {
 	btree *storage.Btree
 }
 
-func NewIndexer(storagePath string) *IndexerBtree {
+func NewIndexerBtree(storagePath string) *IndexerBtree {
 	btree := storage.NewBtree(storagePath)
 	return &IndexerBtree{
 		btree: btree,
@@ -44,9 +44,10 @@ func makeInvertedIndexes(words []string, docId int) map[string]map[int][]int {
 	return m
 }
 
-func (i *IndexerBtree) IndexDocument(docId int, document []byte) {
+func (i *IndexerBtree) IndexDocument(docId int, document []byte) error {
 	words := regexSubstrings(string(document), `[a-zA-Z0-9_]+`)
-	i.btree.AddIndexes(makeInvertedIndexes(words, docId))
+	log.Println(words)
+	return i.btree.AddIndexes(makeInvertedIndexes(words, docId))
 }
 
 func mapKeys(m map[int][]int) []int {
