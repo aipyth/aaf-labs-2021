@@ -18,7 +18,7 @@ type FilePath string
 
 type SheetElement struct {
 	Key  string
-	Data map[int][]int
+	Data map[uint64][]int
 }
 
 type Sheet struct {
@@ -112,7 +112,7 @@ func (s *Sheet) Find(key string) (*SheetElement, int, error) {
 	return nil, len(s.Keys), errors.New("Not found")
 }
 
-func (s *Sheet) Add(key string, data map[int][]int) error {
+func (s *Sheet) Add(key string, data map[uint64][]int) error {
 	if len(s.Keys) == cap(s.Keys) {
 		return errors.New("Sheet full")
 	}

@@ -19,9 +19,7 @@ func TestIndexerIndexDoc(t *testing.T) {
 
 	t.Run("Test create index", func(t *testing.T) {
 		test := "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-		log.Println(regexSubstrings(test, `[a-zA-Z0-9_]+`))
 		indexes := makeInvertedIndexes(regexSubstrings(test, `[a-zA-Z0-9_]+`), 1)
-		log.Println(indexes["pssp"][2])
 		bts := new(bytes.Buffer)
 		for w, m := range indexes {
 			fmt.Fprintf(bts, "%s: {\n", w)

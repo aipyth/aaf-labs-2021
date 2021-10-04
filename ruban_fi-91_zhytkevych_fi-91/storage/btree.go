@@ -113,7 +113,7 @@ func (t *Btree) Find(word string) (*SheetElement, error) {
 	}
 }
 
-func (t *Btree) AddIndex(word string, data map[int][]int) error {
+func (t *Btree) AddIndex(word string, data map[uint64][]int) error {
 	currSheet := t.root
 	index := 0
 	for currSheet.Children != nil {
@@ -155,7 +155,7 @@ func (t *Btree) AddIndex(word string, data map[int][]int) error {
 	return nil
 }
 
-func (t *Btree) AddIndexes(indexedDoc map[string]map[int][]int) error {
+func (t *Btree) AddIndexes(indexedDoc map[string]map[uint64][]int) error {
 	for word, data := range indexedDoc {
 		err := t.AddIndex(word, data)
 		if err != nil {
