@@ -82,7 +82,16 @@ func isEmpty(s rune) bool {
 func split(rawString string) []string {
     contents := make([]string, 0)
     wordStart := 0
+    skipWhites := false
     for i, c := range rawString {
+        // use skipWhites flag variable to skip whitespaces in value tokens
+        if c == '"' {
+            skipWhites = !skipWhites
+        }
+        if skipWhites && i != len(rawString)-1 {
+            continue
+        }
+
         if isEmpty(c) && wordStart == i {
             wordStart = i + 1
         } else if isEmpty(c) {
@@ -208,6 +217,8 @@ func analyzeSearch(tokens []*Token, command *Command) error {
 
     // analyze `WHERE ...;` part
     if len(tokens) == 4 || len(tokens) == 6 {
+        command.SearchQuery = new(domain.SearchQuery)
+
         if tokens[2].Type != TokenTypeKeyword ||
             tokens[2].Raw != "where" {
             return errors.New("query keyword invalid")
@@ -299,7 +310,6 @@ func analyzeTokens(tokens []*Token) (*Command, error) {
 
 func NewCommand(input string) (*Command, error) {
     tokens := tokenizeCommand(input)
-    fmt.Println(tokens)
     if !areAllIdentificatorsValid(tokens) {
         return nil, errors.New("invalid identificators")
     }
@@ -310,15 +320,3 @@ func NewCommand(input string) (*Command, error) {
     return command, nil
 }
 
-func main() {
-    // fmt.Println(NewCommand("create denis_go_v_doty"))
-    // fmt.Println(NewCommand("create denis_go_v_doty asd"))
-    
-    // fmt.Println(NewCommand("delete denis_go_v_doty"))
-    // fmt.Println(NewCommand(`insert denis sssss`))
-    // fmt.Println(NewCommand(`insert denis "sssss`))
-    // fmt.Println(NewCommand(`insert denis sssss"`))
-    // fmt.Println(NewCommand(`insert denis "sssss"`))
-
-    fmt.Println(NewCommand(`search f where "rrr"`))
-}

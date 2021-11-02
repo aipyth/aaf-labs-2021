@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path"
+    "fmt"
 
 	"github.com/aipyth/aaf-labs-2021/ruban_fi-91_zhytkevych_fi-91/indexer"
 	"github.com/aipyth/aaf-labs-2021/ruban_fi-91_zhytkevych_fi-91/storage"
@@ -37,6 +38,19 @@ type SearchQuery struct {
 	Prefix   string
 	N        uint
 	KeywordE string
+}
+
+func (s *SearchQuery) String() string {
+    switch {
+    case s.Keyword != "" && s.Prefix == "" && s.N == 0 && s.KeywordE == "":
+        return fmt.Sprintf("{keywordsearch:%s}", s.Keyword) 
+    case s.Prefix != "" && s.Keyword == "" && s.N == 0 && s.KeywordE == "":
+        return fmt.Sprintf("{prefixsearch:%s}", s.Prefix) 
+    case s.Keyword != "" && s.KeywordE != "" && s.Prefix == "":
+        return fmt.Sprintf("{nsearch:%s %d %s}", s.Keyword, s.N, s.KeywordE) 
+    default:
+        return fmt.Sprintf("{unknownsearch:%s; %s; %s; %d}", s.Keyword, s.Prefix, s.KeywordE, s.N)
+    }
 }
 
 func NewDomain() *Domain {
