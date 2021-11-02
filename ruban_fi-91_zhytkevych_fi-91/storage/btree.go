@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"strings"
 )
@@ -113,20 +115,36 @@ func (t *Btree) Find(word string) (*SheetElement, error) {
 	}
 }
 
-func (t *Btree) FindByPrefix(pattern string) (*SheetElement, error) {
+func (t *Btree) FindByPrefix(prefix string) ([]*SheetElement, error) {
 	currSheet := t.root
+	sheetEls := make([]*SheetElement, 0)
+	parSheet := currSheet
+	parIndex := 0
 	for {
-		el, childIndex, err := currSheet.Match(pattern)
-		if err != nil && currSheet.Children != nil {
-			currSheet, err = ReadSheet(currSheet.Children[childIndex], t.path)
-			if err != nil {
+		found, childIndex, err := currSheet.SearchMatches(prefix)
+		sheetEls = append(sheetEls, found...)
+		if err != nil {
+			if err.Error() == "Stop" {
+				return sheetEls, nil // Returns error "Stop" when stop searching
+			} else {
 				log.Println(err)
 			}
-			continue
 		}
-		return el, err
+		if currSheet.Children != nil {
+			parSheet = currSheet
+			parIndex = childIndex
+			currSheet, err = ReadSheet(currSheet.Children[childIndex], t.path)
+			continue
+		} else if len(parSheet.Children) > parIndex+1 {
+			currSheet, _ = ReadSheet(parSheet.Children[parIndex+1], t.path)
+			parIndex++
+			continue
+		} else {
+			return sheetEls, err
+		}
 	}
 }
+
 func (t *Btree) AddIndex(word string, data map[uint64][]int) error {
 	currSheet := t.root
 	index := 0
@@ -179,22 +197,24 @@ func (t *Btree) AddIndexes(indexedDoc map[string]map[uint64][]int) error {
 	return nil
 }
 
-func childrenToString(sheet *Sheet, path string) string {
-	str := sheet.String()
+func childrenToString(sheet *Sheet, path string, depth int) string {
+	bts := new(bytes.Buffer)
+	tabs := strings.Repeat("	 ", depth)
+	fmt.Fprintf(bts, "\n%s%s", tabs, sheet.String())
 	if len(sheet.Children) != 0 {
-		str += ": {\n"
+		fmt.Fprintf(bts, ": {\n")
 		for _, v := range sheet.Children {
 			nextSheet, err := ReadSheet(v, path)
 			if err != nil {
 				log.Println(err)
 			}
-			str += "	" + childrenToString(nextSheet, path) + "\n"
+			fmt.Fprintf(bts, "  %s%s,\n", tabs, childrenToString(nextSheet, path, depth+1))
 		}
-		str += "},\n"
+		fmt.Fprintf(bts, "%s},", tabs)
 	}
-	return str
+	return bts.String()
 }
 
 func (t *Btree) String() string {
-	return childrenToString(t.root, t.path)
+	return childrenToString(t.root, t.path, 0)
 }
