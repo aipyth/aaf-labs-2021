@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aipyth/aaf-labs-2021/ruban_fi-91_zhytkevych_fi-91/domain"
 )
@@ -16,17 +17,17 @@ func executeCommand(command *Command) {
     case CommandTypeCreate:
         err = dom.CreateCollection(command.Identificator.Raw)
         if err != nil {
-            os.Stderr.WriteString("[ERROR]:" + err.Error())
+            os.Stderr.WriteString("[ERROR]:" + err.Error() + "\n")
             return
         }
-        os.Stdout.WriteString("Collection " + command.Identificator.Raw + " created!")
+        os.Stdout.WriteString("Collection " + command.Identificator.Raw + " created!\n")
     case CommandTypeInsert:
         err = dom.InsertDocument(command.Identificator.Raw, command.InsertDocument)
         if err != nil {
-            os.Stderr.WriteString("[ERROR]:" + err.Error())
+            os.Stderr.WriteString("[ERROR]:" + err.Error()+ "\n")
             return
         }
-        os.Stdout.WriteString("Document added to " + command.Identificator.Raw + ".")
+        os.Stdout.WriteString("Document added to " + command.Identificator.Raw + ".\n")
     case CommandTypeSearch:
         documents := dom.Search(*command.SearchQuery)
         for _, doc := range documents {
@@ -34,7 +35,7 @@ func executeCommand(command *Command) {
             fmt.Println(doc)
         }
     default:
-        os.Stderr.WriteString("[ERROR]: unknown command")
+        os.Stderr.WriteString("[ERROR]: unknown command\n")
     }
 
 }
@@ -42,21 +43,30 @@ func executeCommand(command *Command) {
 func main() {
     rbuff := bufio.NewReader(os.Stdin)
 
+    var payload string
     var command *Command
     for {
+        os.Stdout.WriteString(">")
         s, err := rbuff.ReadString(';')
         if err != nil {
-            os.Stderr.WriteString("[ERROR]: " + err.Error())
+            os.Stderr.WriteString("[ERROR]: " + err.Error() + "\n")
             rbuff.Reset(os.Stdin)
             continue
         }
-
-        command, err = NewCommand(s)
-        if err != nil {
-            os.Stderr.WriteString("[ERROR]: " + err.Error())
-            continue
+        s = strings.TrimSpace(s)
+        payload += s
+        if payload[len(payload)-1] == ';' {
+            cmds := strings.Split(payload, ";")
+            for _, cmd := range cmds {
+                if cmd == "" { continue }
+                command, err = NewCommand(cmd)
+                if err != nil {
+                    os.Stderr.WriteString("[ERROR]: " + err.Error() + "\n")
+                } else {
+                    executeCommand(command)
+                }
+            }
+            payload = ""
         }
-
-        executeCommand(command)
     }
 }
