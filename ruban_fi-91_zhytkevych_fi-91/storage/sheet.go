@@ -9,11 +9,11 @@ import (
 	"log"
 	"os"
 	"path"
-	"regexp"
+	"sort"
 	"strings"
 )
 
-const t = 20
+const t = 5
 
 type FilePath string
 
@@ -64,7 +64,7 @@ func deserialize(file *os.File, sheet *Sheet) (*Sheet, error) {
 }
 
 func ReadSheet(filePath FilePath, folder string) (*Sheet, error) {
-	file, err := os.Open(path.Join(folder, string(filePath)+".gob"))
+	file, err := os.Open(path.Join(folder, "btr-"+string(filePath)+".gob"))
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func ReadSheet(filePath FilePath, folder string) (*Sheet, error) {
 func WriteSheet(sheet *Sheet, folder string) {
 	sheet.Parent = nil
 	buffer, err := serialize(sheet)
-	err = os.WriteFile(path.Join(folder, string(sheet.Name)+".gob"), buffer.Bytes(), 0700)
+	err = os.WriteFile(path.Join(folder, "btr-"+string(sheet.Name)+".gob"), buffer.Bytes(), 0700)
 	if err != nil {
 		log.Println(err)
 	}
@@ -99,35 +99,46 @@ func (s *Sheet) AppendChildren(children []FilePath) {
 }
 
 func (s *Sheet) Find(key string) (*SheetElement, int, error) {
-	for i, v := range s.Keys {
-		cmp := strings.Compare(v.Key, key)
-		switch cmp {
-		case 0:
-			return v, i, nil
-		case 1:
-			return nil, i, errors.New("Not found")
-		case -1:
-			continue
-		}
+	length := len(s.Keys)
+	cmp := strings.Compare(key, s.Keys[length-1].Key)
+	switch cmp {
+	case 0:
+		return s.Keys[length-1], length - 1, nil
+	case 1:
+		return nil, length, errors.New("Not found")
 	}
-	return nil, len(s.Keys), errors.New("Not found")
+	i := sort.Search(length, func(i int) bool { return s.Keys[i].Key >= key })
+	if i < length && s.Keys[i].Key == key {
+		return s.Keys[i], i, nil
+	} else {
+		return nil, i, errors.New("Not found")
+	}
 }
 
-func (s *Sheet) Match(pattern string) (*SheetElement, int, error) {
-	for i, v := range s.Keys {
-		cmp := strings.Compare(v.Key, pattern)
-		match, _ := regexp.MatchString(pattern, v.Key)
-		if match {
-			return v, i, nil
-		}
-		switch cmp {
-		case 1:
-			return nil, i, errors.New("Not found")
-		case -1:
-			continue
-		}
+func (s *Sheet) SearchMatches(prefix string) ([]*SheetElement, int, error) {
+	elements := make([]*SheetElement, 0)
+	length := len(s.Keys)
+	cmp := strings.Compare(prefix, s.Keys[length-1].Key)
+	if cmp == 1 {
+		log.Println("Got here")
+		return elements, length, nil
 	}
-	return nil, len(s.Keys), errors.New("Not found")
+	i := sort.Search(length, func(i int) bool { return s.Keys[i].Key >= prefix })
+	log.Println("index", i, s)
+	if i < length && strings.HasPrefix(s.Keys[i].Key, prefix) {
+		for {
+			elements = append(elements, s.Keys[i])
+			i++
+			if i == length {
+				return elements, i - 1, nil
+			}
+			if !strings.HasPrefix(s.Keys[i].Key, prefix) {
+				return elements, length, errors.New("Stop")
+			}
+		}
+	} else {
+		return elements, i, nil
+	}
 }
 
 func (s *Sheet) Add(key string, data map[uint64][]int) error {
@@ -167,13 +178,21 @@ func (s *Sheet) Add(key string, data map[uint64][]int) error {
 }
 
 func (s *Sheet) String() string {
-	str := "["
+	key_data_string := "["
 	for i, el := range s.Keys {
+		key_data_string += "\"" + el.Key + "\": {"
+		j := 0
+		for docid, posids := range el.Data {
+			key_data_string += fmt.Sprint(docid) + ": " + fmt.Sprint(posids)
+			if j != len(el.Data)-1 {
+				key_data_string += ", "
+			}
+			j++
+		}
+		key_data_string += "}"
 		if i != len(s.Keys)-1 {
-			str += el.Key + ", "
-		} else {
-			str += el.Key
+			key_data_string += "; "
 		}
 	}
-	return str + "]"
+	return key_data_string + "]"
 }
