@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const t = 5
+const t = 10
 
 type FilePath string
 

@@ -3,9 +3,9 @@ package domain
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path"
-    "fmt"
 
 	"github.com/aipyth/aaf-labs-2021/ruban_fi-91_zhytkevych_fi-91/indexer"
 	"github.com/aipyth/aaf-labs-2021/ruban_fi-91_zhytkevych_fi-91/storage"
@@ -17,8 +17,8 @@ const domainConfigName = "dddb-conf.json"
 var defaultDomainConf = &DomainConf{
 	StoragePath: "./",
 	StorageType: "fs",
-    IndexerPath: "./",
-    IndexerType: "fs",
+	IndexerPath: "./",
+	IndexerType: "fs",
 }
 
 type Domain struct {
@@ -41,16 +41,16 @@ type SearchQuery struct {
 }
 
 func (s *SearchQuery) String() string {
-    switch {
-    case s.Keyword != "" && s.Prefix == "" && s.N == 0 && s.KeywordE == "":
-        return fmt.Sprintf("{keywordsearch:%s}", s.Keyword) 
-    case s.Prefix != "" && s.Keyword == "" && s.N == 0 && s.KeywordE == "":
-        return fmt.Sprintf("{prefixsearch:%s}", s.Prefix) 
-    case s.Keyword != "" && s.KeywordE != "" && s.Prefix == "":
-        return fmt.Sprintf("{nsearch:%s %d %s}", s.Keyword, s.N, s.KeywordE) 
-    default:
-        return fmt.Sprintf("{unknownsearch:%s; %s; %s; %d}", s.Keyword, s.Prefix, s.KeywordE, s.N)
-    }
+	switch {
+	case s.Keyword != "" && s.Prefix == "" && s.N == 0 && s.KeywordE == "":
+		return fmt.Sprintf("{keywordsearch:%s}", s.Keyword)
+	case s.Prefix != "" && s.Keyword == "" && s.N == 0 && s.KeywordE == "":
+		return fmt.Sprintf("{prefixsearch:%s}", s.Prefix)
+	case s.Keyword != "" && s.KeywordE != "" && s.Prefix == "":
+		return fmt.Sprintf("{nsearch:%s %d %s}", s.Keyword, s.N, s.KeywordE)
+	default:
+		return fmt.Sprintf("{unknownsearch:%s; %s; %s; %d}", s.Keyword, s.Prefix, s.KeywordE, s.N)
+	}
 }
 
 func NewDomain() *Domain {

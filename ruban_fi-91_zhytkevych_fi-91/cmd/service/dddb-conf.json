@@ -1,0 +1,6 @@
+{
+	"storage_path": "./",
+	"storage_type": "fs",
+	"indexer_path": "./",
+	"indexer_type": "fs"
+}
