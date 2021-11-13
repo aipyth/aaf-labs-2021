@@ -29,6 +29,7 @@ var TokenKeywords = []string{
     "insert",
     "search",
     "where",
+    "quit",
 }
 var emptySymbols = []rune{
     ' ',
@@ -42,6 +43,7 @@ type CommandType string
 const CommandTypeCreate CommandType = "create"
 const CommandTypeInsert CommandType = "insert"
 const CommandTypeSearch CommandType = "search"
+const CommandTypeQuit   CommandType = "quit"
 
 type Command struct {
     Type CommandType
@@ -197,6 +199,8 @@ func analyzeInsert(tokens []*Token, command *Command) error {
 // WARNING! do not look at realization of this function, that is awful!
 // better to look at those raccoons https://www.youtube.com/watch?v=6Sq2uRVYmE4
 func analyzeSearch(tokens []*Token, command *Command) error {
+    command.SearchQuery = new(domain.SearchQuery)
+
     if len(tokens) < 2 {
         return errors.New("wrong number of tokens")
     }
@@ -217,8 +221,6 @@ func analyzeSearch(tokens []*Token, command *Command) error {
 
     // analyze `WHERE ...;` part
     if len(tokens) == 4 || len(tokens) == 6 {
-        command.SearchQuery = new(domain.SearchQuery)
-
         if tokens[2].Type != TokenTypeKeyword ||
             tokens[2].Raw != "where" {
             return errors.New("query keyword invalid")
@@ -272,7 +274,7 @@ func analyzeSearch(tokens []*Token, command *Command) error {
 }
 
 func analyzeTokens(tokens []*Token) (*Command, error) {
-    if len(tokens) < 2 {
+    if len(tokens) < 1 {
         return nil, errors.New("unsufficient number of tokens")
     }
 
@@ -301,6 +303,8 @@ func analyzeTokens(tokens []*Token) (*Command, error) {
         if err := analyzeSearch(tokens, command); err != nil {
             return nil, err
         }
+    case CommandTypeQuit:
+        break
     default:
         return nil, errors.New("unsupported command type")
     }

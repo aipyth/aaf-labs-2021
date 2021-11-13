@@ -1,6 +1,6 @@
 {
-	"storage_path": "./",
+	"storage_path": "/tmp/dddb/storage",
 	"storage_type": "fs",
-	"indexer_path": "./",
+	"indexer_path": "/tmp/dddb/indexer",
 	"indexer_type": "fs"
 }

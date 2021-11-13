@@ -31,9 +31,13 @@ func executeCommand(command *Command) {
     case CommandTypeSearch:
         documents := dom.Search(*command.SearchQuery)
         for _, doc := range documents {
-            // os.Stdout.WriteString(doc.String())
-            fmt.Println(doc)
+            if doc.Collection.Name == command.Identificator.Raw {
+                // os.Stdout.WriteString(doc.String())
+                fmt.Println(doc)
+            }
         }
+    case CommandTypeQuit:
+        os.Exit(0)
     default:
         os.Stderr.WriteString("[ERROR]: unknown command\n")
     }
@@ -47,19 +51,21 @@ func main() {
     var command *Command
     for {
         os.Stdout.WriteString(">")
-        s, err := rbuff.ReadString(';')
+        s, err := rbuff.ReadString('\n')
         if err != nil {
             os.Stderr.WriteString("[ERROR]: " + err.Error() + "\n")
             rbuff.Reset(os.Stdin)
             continue
         }
-        s = strings.TrimSpace(s)
-        payload += s
-        if payload[len(payload)-1] == ';' {
+        trimmed := strings.TrimSpace(s)
+        if trimmed[len(trimmed)-1] == ';' {
+            payload += trimmed
             cmds := strings.Split(payload, ";")
             for _, cmd := range cmds {
+                cmd := strings.TrimSpace(cmd)
                 if cmd == "" { continue }
                 command, err = NewCommand(cmd)
+                // log.Println(command, err)
                 if err != nil {
                     os.Stderr.WriteString("[ERROR]: " + err.Error() + "\n")
                 } else {
@@ -67,6 +73,8 @@ func main() {
                 }
             }
             payload = ""
+        } else {
+            payload += s
         }
     }
 }
