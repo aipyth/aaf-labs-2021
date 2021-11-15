@@ -24,26 +24,29 @@ type Token struct {
 
 var TokenIdentificatorRegexp = regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_]*$")
 
+type CommandType string
+
+const CommandTypeCreate     CommandType = "create"
+const CommandTypeInsert     CommandType = "insert"
+const CommandTypeSearch     CommandType = "search"
+const CommandTypeQuit       CommandType = "quit"
+const CommandTypePrintIndex CommandType = "print_index"
+
 var TokenKeywords = []string{
-    "create",
-    "insert",
-    "search",
+    string(CommandTypeCreate),
+    string(CommandTypeInsert),
+    string(CommandTypeSearch),
+    string(CommandTypeQuit),
+    string(CommandTypePrintIndex),
     "where",
-    "quit",
 }
+
 var emptySymbols = []rune{
     ' ',
     '\n',
     '\t',
     '\r',
 }
-
-type CommandType string
-
-const CommandTypeCreate CommandType = "create"
-const CommandTypeInsert CommandType = "insert"
-const CommandTypeSearch CommandType = "search"
-const CommandTypeQuit   CommandType = "quit"
 
 type Command struct {
     Type CommandType
@@ -249,7 +252,7 @@ func analyzeSearch(tokens []*Token, command *Command) error {
             if value[0] != '"' || value[len(value)-1] != '"' {
                 return errors.New("invalid value")
             }
-            command.SearchQuery.Keyword = value
+            command.SearchQuery.Keyword = value[1:len(value)-1]
             // <n>
             value = tokens[4].Raw
             if value[0] != '<' || value[len(value)-1] != '>' {
@@ -265,7 +268,7 @@ func analyzeSearch(tokens []*Token, command *Command) error {
             if value[0] != '"' || value[len(value)-1] != '"' {
                 return errors.New("invalid value")
             }
-            command.SearchQuery.KeywordE = value
+            command.SearchQuery.KeywordE = value[1:len(value)-1]
         }
     } else if len(tokens) >= 5 {
         return errors.New("wrong number of tokens")
@@ -303,6 +306,7 @@ func analyzeTokens(tokens []*Token) (*Command, error) {
         if err := analyzeSearch(tokens, command); err != nil {
             return nil, err
         }
+    case CommandTypePrintIndex:
     case CommandTypeQuit:
         break
     default:

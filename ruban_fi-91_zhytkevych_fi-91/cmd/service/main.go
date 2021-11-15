@@ -36,6 +36,8 @@ func executeCommand(command *Command) {
                 fmt.Println(doc)
             }
         }
+    case CommandTypePrintIndex:
+        os.Stdout.WriteString(dom.IndexerRepresentationString() + "\n")
     case CommandTypeQuit:
         os.Exit(0)
     default:
@@ -46,6 +48,19 @@ func executeCommand(command *Command) {
 
 func main() {
     rbuff := bufio.NewReader(os.Stdin)
+
+    os.Stdout.WriteString(`# DDDB - Documents database with full-text search
+Available commands:
+    QUIT;
+    CREATE collection_name;
+    INSERT collection_name “value”;
+    PRINT_INDEX;
+    SEARCH collection_name [WHERE query];
+        query := “keyword” 
+ 		 | “prefix”*
+ 		 | “keyword_1” <N> “keyword_2”
+
+`)
 
     var payload string
     var command *Command
