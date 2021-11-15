@@ -164,3 +164,7 @@ func (d *Domain) Search(q SearchQuery) []*storage.Document {
 
 	return documents
 }
+
+func (d *Domain) IndexerRepresentationString() string {
+    return d.Indexer.IndexString()
+}
