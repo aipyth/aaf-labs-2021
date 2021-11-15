@@ -130,36 +130,34 @@ func (d *Domain) InsertDocument(collectionName string, document string) error {
 }
 
 func (d *Domain) Search(q SearchQuery) []*storage.Document {
-	resp := make([]*storage.Document, 0)
+    searchIds := make([]uint64, 0)
+	documents := make([]*storage.Document, 0)
 
 	switch {
 	case q.KeywordE != "" && q.Keyword != "":
-		docs, _ := d.Indexer.GetDocsByKeywords(q.Keyword, q.KeywordE, q.N)
-		for _, v := range docs {
-			doc, err := d.CollectionStorage.GetDocumentById(v)
-			if err == nil {
-				resp = append(resp, doc)
-			}
-		}
-
+        ids, _ := d.Indexer.GetDocsByKeywords(
+            q.Keyword,
+            q.KeywordE,
+            q.N,
+        )
+        searchIds = append(searchIds, ids...)
 	case q.Prefix != "":
-		docs, _ := d.Indexer.GetDocsByPrefix(q.Prefix)
-		for _, v := range docs {
-			doc, err := d.CollectionStorage.GetDocumentById(v)
-			if err == nil {
-				resp = append(resp, doc)
-			}
-		}
-
+		ids, _ := d.Indexer.GetDocsByPrefix(q.Prefix)
+        searchIds = append(searchIds, ids...)
 	case q.Keyword != "":
-		docs, _ := d.Indexer.GetDocsByKeyword(q.Keyword)
-		for _, v := range docs {
-			doc, err := d.CollectionStorage.GetDocumentById(v)
-			if err == nil {
-				resp = append(resp, doc)
-			}
-		}
+		ids, _ := d.Indexer.GetDocsByKeyword(q.Keyword)
+        searchIds = append(searchIds, ids...)
+    default:
+        docs, _ := d.CollectionStorage.GetDocuments()
+        documents = append(documents, docs...)
 	}
 
-	return resp
+    for _, v := range searchIds {
+    	doc, err := d.CollectionStorage.GetDocumentById(v)
+    	if err == nil {
+    	    documents = append(documents, doc)
+    	}
+    }
+
+	return documents
 }

@@ -120,11 +120,11 @@ func (s *Sheet) SearchMatches(prefix string) ([]*SheetElement, int, error) {
 	length := len(s.Keys)
 	cmp := strings.Compare(prefix, s.Keys[length-1].Key)
 	if cmp == 1 {
-		log.Println("Got here")
+		// log.Println("Got here")
 		return elements, length, nil
 	}
 	i := sort.Search(length, func(i int) bool { return s.Keys[i].Key >= prefix })
-	log.Println("index", i, s)
+	// log.Println("index", i, s)
 	if i < length && strings.HasPrefix(s.Keys[i].Key, prefix) {
 		for {
 			elements = append(elements, s.Keys[i])

@@ -3,7 +3,6 @@ package storage
 import (
 	"encoding/gob"
 	"errors"
-	"log"
 	"os"
 	"path"
 	"strconv"
@@ -19,6 +18,7 @@ type CollectionStorage interface {
     GetDocumentById(id uint64) (*Document, error)
     ContainsCollection(name string) bool
     FindCollection(name string) *Collection
+    GetDocuments() ([]*Document, error)    
 }
 
 // CollectionStorageFS implements storage based of saving documents and collections to file system.
@@ -29,20 +29,33 @@ type CollectionStorageFS struct {
 }
 
 // NewCollectionStorageFS creates new CollectionStorageFS that resides in specified path.
-func NewCollectionStorageFS(path string) (*CollectionStorageFS, error) {
+func NewCollectionStorageFS(p string) (*CollectionStorageFS, error) {
     cs := &CollectionStorageFS{
         Collections: make([]*Collection, 0),
         Documents: make(map[uint64]*Document),
-        path: path,
+        path: p,
     }
     if err := cs.loadCollections(); err != nil &&
-        err.Error() != "open collections.gob: no such file or directory" {
+        err.Error() != "open " + path.Join(cs.path, collectionsFileName) + ": no such file or directory" {
         return nil, err
     }
     if err := cs.loadDocuments(); err != nil {
         return nil, err
     }
     return cs, nil
+}
+
+// GetDocuments returns all documents in storage
+func(cs *CollectionStorageFS) GetDocuments() ([]*Document, error) {
+    docs := make([]*Document, 0,)
+    for _, v := range cs.Documents {
+        err := v.Load(cs.path)
+        if err != nil {
+            return docs, err
+        }
+        docs = append(docs, v)
+    }
+    return docs, nil
 }
 
 // saveCollections just saves all collections info to the file collections.gob
@@ -79,7 +92,7 @@ func (cs *CollectionStorageFS) loadDocuments() error {
             name != collectionsFileName {
             docId, err := strconv.ParseUint(name[4:len(name)-4], 10, 64)
             if err != nil {
-                log.Println("[CollectionStorageFS:loadDocuments]", err)
+                // log.Println("[CollectionStorageFS:loadDocuments]", err)
                 continue
             }
 
@@ -144,7 +157,7 @@ func (cs *CollectionStorageFS) CreateCollection(name string) error {
     }
     collection := NewCollection(name)
     cs.Collections = append(cs.Collections, collection)
-    return nil
+    return cs.saveCollections()
 } 
 
 // GetDocumentById return document by id
@@ -153,6 +166,11 @@ func (cs *CollectionStorageFS) GetDocumentById(id uint64) (*Document, error) {
     if !ok {
         return nil, errors.New("this document does not exist")
     }
+    err := doc.Load(cs.path)
+    if err != nil {
+        return doc, err
+    }
     return doc, nil
 }
+
 

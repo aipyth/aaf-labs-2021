@@ -52,3 +52,7 @@ func (d *Document) Load(p string) error {
     decoder := gob.NewDecoder(f)
     return decoder.Decode(d)
 }
+
+func (d *Document) String() string {
+    return fmt.Sprintf("[%d] %s: %s", d.Id, d.Collection.Name, string(d.Contents))
+}
