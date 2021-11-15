@@ -1,7 +1,6 @@
 package indexer
 
 import (
-	"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -80,7 +79,6 @@ func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) 
 		for _, pos := range positions {
 			k := sort.Search(len(e2.Data[id]), func(j int) bool { return e2.Data[id][j] == pos+1+int(dist) })
 			if k < len(e2.Data[id]) && e2.Data[id][k] == pos+1+int(dist) {
-				log.Println("found id", id)
 				docIds = append(docIds, id)
 				break
 			}
