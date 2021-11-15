@@ -47,7 +47,7 @@ func TestIndexerIndexDoc(t *testing.T) {
 	t.Run("Test finding elements by 2 keywords", func(t *testing.T) {
 		indexer := NewIndexerBtree("../storage/btree-storage")
 		indexes, _ := indexer.GetDocsByKeywords("ipsum", "elit", 5)
-		log.Println(indexes)
+		log.Println("by 2 kwrds", indexes)
 	})
 
 	t.Run("Test finding elements by prefix", func(t *testing.T) {
