@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path"
 
@@ -130,34 +131,36 @@ func (d *Domain) InsertDocument(collectionName string, document string) error {
 }
 
 func (d *Domain) Search(q SearchQuery) []*storage.Document {
-    searchIds := make([]uint64, 0)
+	searchIds := make([]uint64, 0)
 	documents := make([]*storage.Document, 0)
 
 	switch {
 	case q.KeywordE != "" && q.Keyword != "":
-        ids, _ := d.Indexer.GetDocsByKeywords(
-            q.Keyword,
-            q.KeywordE,
-            q.N,
-        )
-        searchIds = append(searchIds, ids...)
+		log.Println(q.Keyword, q.KeywordE, q.N)
+		ids, _ := d.Indexer.GetDocsByKeywords(
+			q.Keyword,
+			q.KeywordE,
+			q.N,
+		)
+		log.Println("by 2 kwrds", ids)
+		searchIds = append(searchIds, ids...)
 	case q.Prefix != "":
 		ids, _ := d.Indexer.GetDocsByPrefix(q.Prefix)
-        searchIds = append(searchIds, ids...)
+		searchIds = append(searchIds, ids...)
 	case q.Keyword != "":
 		ids, _ := d.Indexer.GetDocsByKeyword(q.Keyword)
-        searchIds = append(searchIds, ids...)
-    default:
-        docs, _ := d.CollectionStorage.GetDocuments()
-        documents = append(documents, docs...)
+		searchIds = append(searchIds, ids...)
+	default:
+		docs, _ := d.CollectionStorage.GetDocuments()
+		documents = append(documents, docs...)
 	}
 
-    for _, v := range searchIds {
-    	doc, err := d.CollectionStorage.GetDocumentById(v)
-    	if err == nil {
-    	    documents = append(documents, doc)
-    	}
-    }
+	for _, v := range searchIds {
+		doc, err := d.CollectionStorage.GetDocumentById(v)
+		if err == nil {
+			documents = append(documents, doc)
+		}
+	}
 
 	return documents
 }
