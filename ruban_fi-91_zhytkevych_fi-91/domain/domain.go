@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path"
 
@@ -136,13 +135,11 @@ func (d *Domain) Search(q SearchQuery) []*storage.Document {
 
 	switch {
 	case q.KeywordE != "" && q.Keyword != "":
-		log.Println(q.Keyword, q.KeywordE, q.N)
 		ids, _ := d.Indexer.GetDocsByKeywords(
 			q.Keyword,
 			q.KeywordE,
 			q.N,
 		)
-		log.Println("by 2 kwrds", ids)
 		searchIds = append(searchIds, ids...)
 	case q.Prefix != "":
 		ids, _ := d.Indexer.GetDocsByPrefix(q.Prefix)
