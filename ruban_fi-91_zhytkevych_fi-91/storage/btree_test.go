@@ -160,7 +160,7 @@ func TestSheetAddElement(t *testing.T) {
 		log.Println(btree.Find("l"))
 		log.Println(btree.Find("h"))
 		found, err := btree.FindByPrefix("ob")
-		log.Println(err, len(found))
+		log.Println(len(found), err)
 		dir, _ := ioutil.ReadDir("./btree-storage")
 		for _, file := range dir {
 			os.Remove(path.Join("./btree-storage", file.Name()))

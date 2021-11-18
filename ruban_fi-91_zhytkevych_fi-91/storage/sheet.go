@@ -115,29 +115,29 @@ func (s *Sheet) Find(key string) (*SheetElement, int, error) {
 	}
 }
 
-func (s *Sheet) SearchMatches(prefix string) ([]*SheetElement, int, error) {
+func (s *Sheet) SearchMatches(prefix string) ([]*SheetElement, []int, error) {
 	elements := make([]*SheetElement, 0)
+	childIndexes := make([]int, 0)
 	length := len(s.Keys)
 	cmp := strings.Compare(prefix, s.Keys[length-1].Key)
 	if cmp == 1 {
-		// log.Println("Got here")
-		return elements, length, nil
+		return elements, []int{length}, nil
 	}
 	i := sort.Search(length, func(i int) bool { return s.Keys[i].Key >= prefix })
-	// log.Println("index", i, s)
 	if i < length && strings.HasPrefix(s.Keys[i].Key, prefix) {
 		for {
 			elements = append(elements, s.Keys[i])
+			childIndexes = append(childIndexes, i)
 			i++
 			if i == length {
-				return elements, i - 1, nil
+				return elements, append(childIndexes, i), nil
 			}
 			if !strings.HasPrefix(s.Keys[i].Key, prefix) {
-				return elements, length, errors.New("Stop")
+				return elements, childIndexes, nil
 			}
 		}
 	} else {
-		return elements, i, nil
+		return elements, []int{i}, nil
 	}
 }
 
