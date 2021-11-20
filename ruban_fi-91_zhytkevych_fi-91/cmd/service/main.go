@@ -73,6 +73,9 @@ Available commands:
             continue
         }
         trimmed := strings.TrimSpace(s)
+        if len(trimmed) == 0 {
+            continue
+        }
         if trimmed[len(trimmed)-1] == ';' {
             payload += trimmed
             cmds := strings.Split(payload, ";")
