@@ -59,6 +59,27 @@ func mapKeys(m map[uint64][]int) []uint64 {
 	return keys
 }
 
+func Includes(slice []uint64, el uint64) bool {
+	for _, x := range slice {
+		if x == el {
+			return true
+		}
+	}
+	return false
+}
+
+func GetDocIds(shEls []*storage.SheetElement) []uint64 {
+	docIds := make([]uint64, 0)
+	for _, shEl := range shEls {
+		for docId := range shEl.Data {
+			if !Includes(docIds, docId) {
+				docIds = append(docIds, docId)
+			}
+		}
+	}
+	return docIds
+}
+
 func (i *IndexerBtree) GetDocsByKeyword(word string) ([]uint64, error) {
 	word = strings.ToLower(word)
 	sheetEl, err := i.btree.Find(word)
@@ -77,8 +98,10 @@ func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) 
 	}
 	for id, positions := range e1.Data {
 		for _, pos := range positions {
-			k := sort.Search(len(e2.Data[id]), func(j int) bool { return e2.Data[id][j] == pos+1+int(dist) })
-			if k < len(e2.Data[id]) && e2.Data[id][k] == pos+1+int(dist) {
+			k := sort.Search(len(e2.Data[id]), func(j int) bool {
+				return e2.Data[id][j] == pos+int(dist) || e2.Data[id][j] == pos-int(dist)
+			})
+			if k < len(e2.Data[id]) && (e2.Data[id][k] == pos+int(dist) || e2.Data[id][k] == pos-int(dist)) {
 				docIds = append(docIds, id)
 				break
 			}
@@ -90,14 +113,11 @@ func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) 
 func (i *IndexerBtree) GetDocsByPrefix(prefix string) ([]uint64, error) {
 	prefix = strings.ToLower(prefix)
 	shEls, err := i.btree.FindByPrefix(prefix)
-	keys := make([]uint64, 0)
-	for _, el := range shEls {
-		keys = append(keys, mapKeys(el.Data)...)
-	}
 	if err != nil {
 		return []uint64{}, err
 	}
-	return keys, nil
+	docIds := GetDocIds(shEls)
+	return docIds, nil
 }
 
 func (i *IndexerBtree) IndexString() string {

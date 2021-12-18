@@ -115,34 +115,67 @@ func (t *Btree) Find(word string) (*SheetElement, error) {
 	}
 }
 
-func (t *Btree) FindByPrefix(prefix string) ([]*SheetElement, error) {
-	currSheet := t.root
-	sheetEls := make([]*SheetElement, 0)
-	parSheet := currSheet
-	parIndex := 0
-	for {
-		found, childIndex, err := currSheet.SearchMatches(prefix)
-		sheetEls = append(sheetEls, found...)
+func TreeTraversal(sheet *Sheet, callback func(*Sheet) ([]*Sheet, error)) error {
+	nextSheets, err := callback(sheet)
+	if err != nil {
+		return err
+	}
+	for _, next := range nextSheets {
+		err := TreeTraversal(next, callback)
 		if err != nil {
-			if err.Error() == "Stop" {
-				return sheetEls, nil // Returns error "Stop" when stop searching
-			} else {
-				log.Println(err)
-			}
-		}
-		if currSheet.Children != nil {
-			parSheet = currSheet
-			parIndex = childIndex
-			currSheet, err = ReadSheet(currSheet.Children[childIndex], t.path)
-			continue
-		} else if len(parSheet.Children) > parIndex+1 {
-			currSheet, _ = ReadSheet(parSheet.Children[parIndex+1], t.path)
-			parIndex++
-			continue
-		} else {
-			return sheetEls, err
+			return err
 		}
 	}
+	return nil
+}
+
+func (t *Btree) FindByPrefix(prefix string) ([]*SheetElement, error) {
+	// currSheet := t.root
+	sheetEls := make([]*SheetElement, 0)
+	// parSheet := currSheet
+	// parIndex := 0
+	err := TreeTraversal(t.root, func(currSheet *Sheet) ([]*Sheet, error) {
+		found, childIndexes, _ := currSheet.SearchMatches(prefix)
+		sheetEls = append(sheetEls, found...)
+		sheetsToVisist := make([]*Sheet, 0)
+		if currSheet.Children != nil {
+			for _, indx := range childIndexes {
+				next, err := ReadSheet(currSheet.Children[indx], t.path)
+				if err != nil {
+					return []*Sheet{}, err
+				}
+				sheetsToVisist = append(sheetsToVisist, next)
+			}
+		}
+		return sheetsToVisist, nil
+	})
+	if err != nil {
+		return []*SheetElement{}, err
+	}
+	return sheetEls, nil
+	// for {
+	// found, childIndex, err := currSheet.SearchMatches(prefix)
+	// sheetEls = append(sheetEls, found...)
+	// if err != nil {
+	// 	if err.Error() == "Stop" {
+	// 		return RemoveRepeats(sheetEls), nil // Returns error "Stop" when stop searching
+	// 	} else {
+	// 		log.Println(err)
+	// 	}
+	// }
+	// if currSheet.Children != nil {
+	// 	parSheet = currSheet
+	// 	parIndex = childIndex
+	// 	currSheet, err = ReadSheet(currSheet.Children[childIndex], t.path)
+	// 	continue
+	// } else if len(parSheet.Children) > parIndex+1 {
+	// 	currSheet, _ = ReadSheet(parSheet.Children[parIndex+1], t.path)
+	// 	parIndex++
+	// 	continue
+	// } else {
+	// 	return RemoveRepeats(sheetEls), err
+	// }
+	// }
 }
 
 func (t *Btree) AddIndex(word string, data map[uint64][]int) error {
