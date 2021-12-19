@@ -1,6 +1,9 @@
 package indexer
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -8,22 +11,45 @@ import (
 )
 
 type Indexer interface {
-	IndexDocument(docId uint64, document []byte) error
-	IndexString() string
-	GetDocsByKeyword(word string) ([]uint64, error)
-	GetDocsByPrefix(word string) ([]uint64, error)
-	GetDocsByKeywords(word1 string, word2 string, dist uint) ([]uint64, error)
+	IndexDocument(docId uint64, collectionName string, document []byte) error
+	BtreesString() string
+	GetDocsByKeyword(collectionName string, word string) ([]uint64, error)
+	GetDocsByPrefix(collectionName string, word string) ([]uint64, error)
+	GetDocsByKeywords(collectionName string, word1 string, word2 string, dist uint) ([]uint64, error)
+}
+
+type BtreeEntry struct {
+	Name  string
+	Btree *storage.Btree
 }
 
 type IndexerBtree struct {
-	btree *storage.Btree
+	path   string
+	btrees []BtreeEntry
 }
 
 func NewIndexerBtree(storagePath string) *IndexerBtree {
-	btree := storage.NewBtree(storagePath)
 	return &IndexerBtree{
-		btree: btree,
+		path:   storagePath,
+		btrees: readPathBtrees(storagePath),
 	}
+}
+
+func readPathBtrees(path string) (btrees []BtreeEntry) {
+	entries, _ := os.ReadDir(path)
+	btrees = make([]BtreeEntry, 0)
+
+	var entryPath string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			entryPath = filepath.Join(path, entry.Name())
+			btrees = append(btrees, BtreeEntry{
+				Name:  entry.Name(),
+				Btree: storage.NewBtree(entryPath),
+			})
+		}
+	}
+	return
 }
 
 func regexSubstrings(str string, reg string) []string {
@@ -43,9 +69,31 @@ func makeInvertedIndexes(words []string, docId uint64) map[string]map[uint64][]i
 	return m
 }
 
-func (i *IndexerBtree) IndexDocument(docId uint64, document []byte) error {
+func (i *IndexerBtree) getBtreeByCollection(name string) *storage.Btree {
+	for _, bt := range i.btrees {
+		if bt.Name == name {
+			return bt.Btree
+		}
+	}
+	return nil
+}
+
+func (i *IndexerBtree) IndexDocument(docId uint64, collectionName string, document []byte) error {
 	words := regexSubstrings(string(document), `[a-zA-Z0-9_]+`)
-	return i.btree.AddIndexes(makeInvertedIndexes(words, docId))
+	btree := i.getBtreeByCollection(collectionName)
+	if btree == nil {
+		// create new btree
+		btreePath := filepath.Join(i.path, collectionName)
+		if err := os.Mkdir(btreePath, os.ModeDir|os.ModePerm); err != nil {
+			panic(err)
+		}
+		btree = storage.NewBtree(btreePath)
+		i.btrees = append(i.btrees, BtreeEntry{
+			Name:  collectionName,
+			Btree: btree,
+		})
+	}
+	return btree.AddIndexes(makeInvertedIndexes(words, docId))
 }
 
 func mapKeys(m map[uint64][]int) []uint64 {
@@ -79,9 +127,13 @@ func GetDocIds(shEls []*storage.SheetElement) []uint64 {
 	return docIds
 }
 
-func (i *IndexerBtree) GetDocsByKeyword(word string) ([]uint64, error) {
+func (i *IndexerBtree) GetDocsByKeyword(collectionName string, word string) ([]uint64, error) {
+	btree := i.getBtreeByCollection(collectionName)
+	if btree == nil {
+		return []uint64{}, errors.New("No such collection")
+	}
 	word = strings.ToLower(word)
-	sheetEl, err := i.btree.Find(word)
+	sheetEl, err := btree.Find(word)
 	if err != nil {
 		return []uint64{}, err
 	}
@@ -98,9 +150,13 @@ func makePositionsHash(data map[uint64][]int) map[int]uint64 {
 	return hashmap
 }
 
-func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) ([]uint64, error) {
-	e1, err := i.btree.Find(word1)
-	e2, err := i.btree.Find(word2)
+func (i *IndexerBtree) GetDocsByKeywords(collectionName string, word1 string, word2 string, dist uint) ([]uint64, error) {
+	btree := i.getBtreeByCollection(collectionName)
+	if btree == nil {
+		return []uint64{}, errors.New("No such collection")
+	}
+	e1, err := btree.Find(word1)
+	e2, err := btree.Find(word2)
 	var docIds []uint64
 	if err != nil {
 		return docIds, err
@@ -119,9 +175,13 @@ func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) 
 	return docIds, nil
 }
 
-func (i *IndexerBtree) GetDocsByPrefix(prefix string) ([]uint64, error) {
+func (i *IndexerBtree) GetDocsByPrefix(collectionName string, prefix string) ([]uint64, error) {
+	btree := i.getBtreeByCollection(collectionName)
+	if btree == nil {
+		return []uint64{}, errors.New("No such collection")
+	}
 	prefix = strings.ToLower(prefix)
-	shEls, err := i.btree.FindByPrefix(prefix)
+	shEls, err := btree.FindByPrefix(prefix)
 	if err != nil {
 		return []uint64{}, err
 	}
@@ -129,6 +189,11 @@ func (i *IndexerBtree) GetDocsByPrefix(prefix string) ([]uint64, error) {
 	return docIds, nil
 }
 
-func (i *IndexerBtree) IndexString() string {
-	return i.btree.String()
+func (i *IndexerBtree) BtreesString() (out string) {
+	for _, entry := range i.btrees {
+		out += entry.Name + ": "
+		out += entry.Btree.String()
+		out += "\n"
+	}
+	return
 }

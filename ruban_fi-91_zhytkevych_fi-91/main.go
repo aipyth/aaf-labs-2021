@@ -29,7 +29,7 @@ func executeCommand(command *Command) {
         }
         os.Stdout.WriteString("Document added to " + command.Identificator.Raw + ".\n")
     case CommandTypeSearch:
-        documents := dom.Search(*command.SearchQuery)
+        documents := dom.Search(command.Identificator.Raw, *command.SearchQuery)
         for _, doc := range documents {
             if doc.Collection.Name == command.Identificator.Raw {
                 // os.Stdout.WriteString(doc.String())

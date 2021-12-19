@@ -121,7 +121,7 @@ func (d *Domain) InsertDocument(collectionName string, document string) error {
 		return err
 	}
 
-	err = d.Indexer.IndexDocument(doc.Id, []byte(document))
+	err = d.Indexer.IndexDocument(doc.Id, collectionName, []byte(document))
 	if err != nil {
 		return err
 	}
@@ -129,23 +129,24 @@ func (d *Domain) InsertDocument(collectionName string, document string) error {
 	return nil
 }
 
-func (d *Domain) Search(q SearchQuery) []*storage.Document {
+func (d *Domain) Search(collectionName string, q SearchQuery) []*storage.Document {
 	searchIds := make([]uint64, 0)
 	documents := make([]*storage.Document, 0)
 
 	switch {
 	case q.KeywordE != "" && q.Keyword != "":
 		ids, _ := d.Indexer.GetDocsByKeywords(
+            collectionName,
 			q.Keyword,
 			q.KeywordE,
 			q.N,
 		)
 		searchIds = append(searchIds, ids...)
 	case q.Prefix != "":
-		ids, _ := d.Indexer.GetDocsByPrefix(q.Prefix)
+		ids, _ := d.Indexer.GetDocsByPrefix(collectionName, q.Prefix)
 		searchIds = append(searchIds, ids...)
 	case q.Keyword != "":
-		ids, _ := d.Indexer.GetDocsByKeyword(q.Keyword)
+		ids, _ := d.Indexer.GetDocsByKeyword(collectionName, q.Keyword)
 		searchIds = append(searchIds, ids...)
 	default:
 		docs, _ := d.CollectionStorage.GetDocuments()
@@ -163,5 +164,5 @@ func (d *Domain) Search(q SearchQuery) []*storage.Document {
 }
 
 func (d *Domain) IndexerRepresentationString() string {
-    return d.Indexer.IndexString()
+    return d.Indexer.BtreesString()
 }
