@@ -2,7 +2,6 @@ package indexer
 
 import (
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/aipyth/aaf-labs-2021/ruban_fi-91_zhytkevych_fi-91/storage"
@@ -48,6 +47,17 @@ func (i *IndexerBtree) IndexDocument(docId uint64, document []byte) error {
 	words := regexSubstrings(string(document), `[a-zA-Z0-9_]+`)
 	return i.btree.AddIndexes(makeInvertedIndexes(words, docId))
 }
+
+func searchLinear(array []int, callback func(j int) bool) int {
+	for i := range array {
+		if callback(i) {
+			return i
+		} else {
+			return len(array)
+		}
+	}
+	return len(array)
+} // Linear search, return first found index satisfying the condition or returns array length if fails
 
 func mapKeys(m map[uint64][]int) []uint64 {
 	keys := make([]uint64, len(m))
@@ -98,7 +108,10 @@ func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) 
 	}
 	for id, positions := range e1.Data {
 		for _, pos := range positions {
-			k := sort.Search(len(e2.Data[id]), func(j int) bool {
+			// k := sort.Search(len(e2.Data[id]), func(j int) bool {
+			// 	return e2.Data[id][j] == pos+int(dist) || e2.Data[id][j] == pos-int(dist)
+			// })
+			k := searchLinear(e2.Data[id], func(j int) bool {
 				return e2.Data[id][j] == pos+int(dist) || e2.Data[id][j] == pos-int(dist)
 			})
 			if k < len(e2.Data[id]) && (e2.Data[id][k] == pos+int(dist) || e2.Data[id][k] == pos-int(dist)) {
