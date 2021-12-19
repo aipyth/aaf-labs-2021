@@ -48,17 +48,6 @@ func (i *IndexerBtree) IndexDocument(docId uint64, document []byte) error {
 	return i.btree.AddIndexes(makeInvertedIndexes(words, docId))
 }
 
-func searchLinear(array []int, callback func(j int) bool) int {
-	for i := range array {
-		if callback(i) {
-			return i
-		} else {
-			return len(array)
-		}
-	}
-	return len(array)
-} // Linear search, return first found index satisfying the condition or returns array length if fails
-
 func mapKeys(m map[uint64][]int) []uint64 {
 	keys := make([]uint64, len(m))
 	i := 0
@@ -99,6 +88,16 @@ func (i *IndexerBtree) GetDocsByKeyword(word string) ([]uint64, error) {
 	return mapKeys(sheetEl.Data), nil
 }
 
+func makePositionsHash(data map[uint64][]int) map[int]uint64 {
+	hashmap := make(map[int]uint64, 0)
+	for id, positions := range data {
+		for _, pos := range positions {
+			hashmap[pos] = id
+		}
+	}
+	return hashmap
+}
+
 func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) ([]uint64, error) {
 	e1, err := i.btree.Find(word1)
 	e2, err := i.btree.Find(word2)
@@ -106,17 +105,14 @@ func (i *IndexerBtree) GetDocsByKeywords(word1 string, word2 string, dist uint) 
 	if err != nil {
 		return docIds, err
 	}
-	for id, positions := range e1.Data {
+	e1_hash := makePositionsHash(e1.Data)
+	for e2_id, positions := range e2.Data {
 		for _, pos := range positions {
-			// k := sort.Search(len(e2.Data[id]), func(j int) bool {
-			// 	return e2.Data[id][j] == pos+int(dist) || e2.Data[id][j] == pos-int(dist)
-			// })
-			k := searchLinear(e2.Data[id], func(j int) bool {
-				return e2.Data[id][j] == pos+int(dist) || e2.Data[id][j] == pos-int(dist)
-			})
-			if k < len(e2.Data[id]) && (e2.Data[id][k] == pos+int(dist) || e2.Data[id][k] == pos-int(dist)) {
-				docIds = append(docIds, id)
-				break
+			if e1_id, ok := e1_hash[pos+int(dist)]; ok && e1_id == e2_id {
+				docIds = append(docIds, e1_id)
+			}
+			if e1_id, ok := e1_hash[pos-int(dist)]; ok && e1_id == e2_id {
+				docIds = append(docIds, e1_id)
 			}
 		}
 	}
