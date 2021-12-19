@@ -157,22 +157,22 @@ func (i *IndexerBtree) GetDocsByKeywords(collectionName string, word1 string, wo
 	}
 	e1, err := btree.Find(word1)
 	e2, err := btree.Find(word2)
-	var docIds []uint64
+	docIds := NewSetUint()
 	if err != nil {
-		return docIds, err
+		return docIds.ToArray(), err
 	}
 	e1_hash := makePositionsHash(e1.Data)
 	for e2_id, positions := range e2.Data {
 		for _, pos := range positions {
 			if e1_id, ok := e1_hash[pos+int(dist)]; ok && e1_id == e2_id {
-				docIds = append(docIds, e1_id)
+				docIds.Add(e1_id)
 			}
 			if e1_id, ok := e1_hash[pos-int(dist)]; ok && e1_id == e2_id {
-				docIds = append(docIds, e1_id)
+				docIds.Add(e1_id)
 			}
 		}
 	}
-	return docIds, nil
+	return docIds.ToArray(), nil
 }
 
 func (i *IndexerBtree) GetDocsByPrefix(collectionName string, prefix string) ([]uint64, error) {
