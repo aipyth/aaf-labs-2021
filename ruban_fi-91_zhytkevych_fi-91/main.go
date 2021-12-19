@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -46,6 +47,31 @@ func executeCommand(command *Command) {
 
 }
 
+func pairedQuotationMarks(s string) (paired bool) {
+    paired = true
+    for _, c := range s {
+        if c == '"' { paired = !paired }
+    }
+    return
+}
+
+func splitIntoCmd(payload string) []string {
+    cmds := make([]string, 0, 1)
+    lastCmdStart := 0
+    inStrIdentifier := false
+    for i, c := range payload {
+        switch c {
+        case '"':
+            inStrIdentifier = !inStrIdentifier
+        case ';':
+            if inStrIdentifier { continue }
+            cmds = append(cmds, payload[lastCmdStart:i])
+            lastCmdStart = i + 1
+        }
+    }
+    return cmds
+}
+
 func main() {
     rbuff := bufio.NewReader(os.Stdin)
 
@@ -72,18 +98,23 @@ Available commands:
             rbuff.Reset(os.Stdin)
             continue
         }
+
         trimmed := strings.TrimSpace(s)
         if len(trimmed) == 0 {
             continue
         }
+        if !pairedQuotationMarks(trimmed) {
+            continue
+        }
+
         if trimmed[len(trimmed)-1] == ';' {
             payload += trimmed
-            cmds := strings.Split(payload, ";")
+            cmds := splitIntoCmd(payload)
+            log.Println("cmds: ", cmds)
             for _, cmd := range cmds {
                 cmd := strings.TrimSpace(cmd)
                 if cmd == "" { continue }
                 command, err = NewCommand(cmd)
-                // log.Println(command, err)
                 if err != nil {
                     os.Stderr.WriteString("[ERROR]: " + err.Error() + "\n")
                 } else {
