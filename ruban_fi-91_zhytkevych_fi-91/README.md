@@ -24,3 +24,24 @@ Documents database with inverted index.
 
 ![architecture diagram](./architecture.png)
 
+
+# Config
+
+You can create `dddb-conf.json` in the directory you execute your binary in order to customize paths where **Indexer** and **Collection Storage** save their files. The DB considers current working directory as directory for **Indexer** and **Storage** by default if the config is not present.
+
+| Field | Explanation | Type |
+| ---   | ---         | ---- |
+| `storage_path` | Working path for storage | String path |
+| `storage_type` | Type of storage to use (currently only filesystem `fs` type is supported) | String |
+| `indexer_path` | Working path for indexer | String path |
+| `indexer_type` | Type of indexer to use (currently only filesystem `fs` type is supported) | String |
+
+Config `dddb-conf.json` example:
+```json
+{
+	"storage_path": "/tmp/dddb/storage",
+	"storage_type": "fs",
+	"indexer_path": "/tmp/dddb/indexer",
+	"indexer_type": "fs"
+}
+```
