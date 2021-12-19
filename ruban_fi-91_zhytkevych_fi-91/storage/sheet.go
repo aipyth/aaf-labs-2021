@@ -129,11 +129,8 @@ func (s *Sheet) SearchMatches(prefix string) ([]*SheetElement, []int, error) {
 			elements = append(elements, s.Keys[i])
 			childIndexes = append(childIndexes, i)
 			i++
-			if i == length {
+			if !strings.HasPrefix(s.Keys[i].Key, prefix) || i == length {
 				return elements, append(childIndexes, i), nil
-			}
-			if !strings.HasPrefix(s.Keys[i].Key, prefix) {
-				return elements, childIndexes, nil
 			}
 		}
 	} else {
