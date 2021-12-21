@@ -140,11 +140,12 @@ func (i *IndexerBtree) GetDocsByKeyword(collectionName string, word string) ([]u
 	return mapKeys(sheetEl.Data), nil
 }
 
-func makePositionsHash(data map[uint64][]int) map[int]uint64 {
-	hashmap := make(map[int]uint64, 0)
+func makePositionsHash(data map[uint64][]int) map[uint64]map[int]bool {
+	hashmap := make(map[uint64]map[int]bool, 0)
 	for id, positions := range data {
+		hashmap[id] = make(map[int]bool, 0)
 		for _, pos := range positions {
-			hashmap[pos] = id
+			hashmap[id][pos] = true
 		}
 	}
 	return hashmap
@@ -164,11 +165,11 @@ func (i *IndexerBtree) GetDocsByKeywords(collectionName string, word1 string, wo
 	e1_hash := makePositionsHash(e1.Data)
 	for e2_id, positions := range e2.Data {
 		for _, pos := range positions {
-			if e1_id, ok := e1_hash[pos+int(dist)]; ok && e1_id == e2_id {
-				docIds.Add(e1_id)
+			if e1_hash[e2_id][pos+int(dist)] {
+				docIds.Add(e2_id)
 			}
-			if e1_id, ok := e1_hash[pos-int(dist)]; ok && e1_id == e2_id {
-				docIds.Add(e1_id)
+			if e1_hash[e2_id][pos-int(dist)] {
+				docIds.Add(e2_id)
 			}
 		}
 	}
